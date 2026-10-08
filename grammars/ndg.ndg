@@ -1,0 +1,38 @@
+// ndgrammar
+
+~WS = [ \t\n\r];
+~COMMENT = '/*' ~'*/'* '*/' | '//' ~'\n'* '\n';
+
+STRING = '"' (~["\\] | '\\' .)* '"' | "'" (~['\\] | '\\' .)* "'";
+RANGE = '[' (~[\]\\] | '\\' .)* ']';
+
+LEX_IDEN = [A-Z] [A-Za-z0-9_]*;
+PARSE_IDEN = [a-z] [A-Za-z0-9_]*;
+
+simple = '~'@negate? (group | STRING | RANGE):match ((':' | '@'@flag) PARSE_IDEN:iden)? [*+?]:quantity?;
+// simple {
+//   negate: bool,
+//   match: group | STRING | RANGE,
+//   flag: bool,
+//   iden?: PARSE_IDEN,
+//   quantity?: [*+?]
+// }
+
+expr = simple+;
+group = '(' expr ')';
+
+match = expr:branch ('|' expr:branch)*;
+
+tokenDef = ('~'@skip)? LEX_IDEN:name (':' LEX_IDEN:overrides)? '=' match:match ';';
+// tokenDef {
+//   skip: bool,
+//   name: LEX_IDEN,
+//   overrides?: LEX_IDEN,
+//   match: match
+// }
+
+parseDef = PARSE_IDEN:name '=' match:match ';';
+
+stmt = ';'* (tokenDef | parseDef);
+
+grammar = stmt+ ';'* EOF;

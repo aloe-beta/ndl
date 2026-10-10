@@ -9,19 +9,38 @@ RANGE = '[' (~[\]\\] | '\\' .)* ']';
 LEX_IDEN = [A-Z] [A-Za-z0-9_]*;
 PARSE_IDEN = [a-z] [A-Za-z0-9_]*;
 
-simple = '~'@negate? (group | STRING | RANGE):match ((':' | '@'@flag) PARSE_IDEN:iden)? [*+?]:quantity?;
+simple = (
+    '<'@lookbehind?
+    '~':negate?
+    (group | STRING | RANGE | LEX_IDEN | PARSE_IDEN):match
+    ((':' | '@'@flag) PARSE_IDEN:iden)?
+    ('?':quantity | [*+]:quantity (':' simple:delimiter)?)?
+    '>'@lookahead?
+);
 // simple {
+//   lookbehind: bool,
 //   negate: bool,
-//   match: group | STRING | RANGE,
+//   match: group | STRING | RANGE | LEX_IDEN | PARSE_IDEN,
 //   flag: bool,
 //   iden?: PARSE_IDEN,
-//   quantity?: [*+?]
+//   quantity?: '?' | '*' | '+',
+//   delimiter?: simple,
+//   lookahead: bool
 // }
 
 expr = simple+;
-group = '(' expr ')';
+// expr: simple[]
 
-match = expr:branch ('|' expr:branch)*;
+group = '(' expr:branch*:'|' ')' ('%' simple:delimiter)?;
+// group {
+//   branch: expr[],
+//   delimiter?: simple
+// }
+
+match = expr:branch*:'|';
+// match {
+//   branch: expr[]
+// }
 
 tokenDef = ('~'@skip)? LEX_IDEN:name (':' LEX_IDEN:overrides)? '=' match:match ';';
 // tokenDef {
@@ -32,7 +51,13 @@ tokenDef = ('~'@skip)? LEX_IDEN:name (':' LEX_IDEN:overrides)? '=' match:match '
 // }
 
 parseDef = PARSE_IDEN:name '=' match:match ';';
+// parseDef {
+//   name: PARSE_IDEN,
+//   match: match
+// }
 
-stmt = ';'* (tokenDef | parseDef);
+stmt = tokenDef | parseDef;
+// stmt: tokenDef | parseDef
 
-grammar = stmt+ ';'* EOF;
+grammar = ';'* stmt+:';'* ';'* EOF;
+// grammar: stmt[]

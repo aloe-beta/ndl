@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "main.h"
+#include "ndg.h"
+
 char *read_file(char *path, size_t *ret_size) {
     FILE *file = fopen(path, "rb");
     if (!file) {
@@ -40,16 +43,25 @@ int main(int argc, char *argv[]) {
     }
 
     size_t size = 0;
-    char *contents = read_file(argv[1], &size);
+    char *source = read_file(argv[1], &size);
 
-    if (!contents) {
+    if (!source) {
         fprintf(stderr, "Error: failed to read %s\n", argv[1]);
-        free(contents);
+        free(source);
         return -1;
     }
 
-    printf("%s:\n%s", argv[1], contents);
+    // printf("%s:\n%s", argv[1], contents);
+    Lexer lexer;
+    init_lexer(&lexer, source);
 
-    free(contents);
+    while (1) {
+        Token token = next_token(&lexer);
+        printf("%s: <%.*s>\n", TOKEN_NAMES[token.type], (int)token.length, token.start);
+
+        if (token.type == T_EOF) break;
+    }
+
+    free(source);
     return 0;
 }

@@ -11,7 +11,7 @@ PARSE_IDEN = [a-z] [A-Za-z0-9_]*;
 
 simple = (
     '<'@lookbehind?
-    '~':negate?
+    '~'@negate?
     (group | STRING | RANGE | LEX_IDEN | PARSE_IDEN):match
     ((':' | '@'@flag) PARSE_IDEN:iden)?
     ('?':quantity | [*+]:quantity (':' simple:delimiter)?)?

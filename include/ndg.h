@@ -2,6 +2,7 @@
 #define NDG_H
 
 #include <stddef.h>
+#include <stdlib.h>
 
 typedef unsigned int uint;
 
@@ -36,8 +37,42 @@ typedef struct {
     uint line;
 } Lexer;
 
+typedef enum {
+    T_SIMPLE,
+    T_EXPR,
+    T_MATCH,
+    T_TOKENDEF,
+    T_PARSEDEF,
+    T_STMT,
+    T_GRAMMAR
+} NodeType;
+
 void init_lexer(Lexer *lexer, const char* source);
 
 Token next_token(Lexer *lexer);
+
+Token *tokenize(char *source, size_t size);
+
+static const char* NODE_NAMES[] = {
+    [T_SIMPLE]   = "simple",
+    [T_EXPR]     = "expr",
+    [T_MATCH]    = "match",
+    [T_TOKENDEF] = "tokenDef",
+    [T_PARSEDEF] = "parseDef",
+    [T_STMT]     = "stmt",
+    [T_GRAMMAR]  = "grammar"
+};
+
+typedef struct {
+    char *ptr;
+    char *pos;
+    size_t size;
+} Arena;
+
+typedef struct {
+    Arena arena;
+    NodeType *first;
+    Token *tokens;
+} Parser;
 
 #endif

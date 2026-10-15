@@ -118,3 +118,27 @@ skip:
 end:
     return (Token){ token, start, (uint)(l->current - start), line };
 }
+
+Token *tokenize(char *source, size_t source_size) {
+    Lexer lexer;
+    init_lexer(&lexer, source);
+
+    size_t count = source_size / 5;
+    Token *tokens = malloc(count*24);
+    uint i = 0;
+
+    while (1) {
+        if (i >= count) {
+            count *= 2;
+            tokens = realloc(tokens, count*24);
+        }
+
+        Token token = next_token(&lexer);
+        tokens[i] = token;
+        i++;
+
+        if (token.type == T_EOF) break;
+    }
+
+    return realloc(tokens, i*24);
+}

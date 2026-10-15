@@ -51,12 +51,12 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // printf("%s:\n%s", argv[1], contents);
-    Lexer lexer;
-    init_lexer(&lexer, source);
-
+    Token *tokens = tokenize(source, size);
+    size_t i = 0;
     while (1) {
-        Token token = next_token(&lexer);
+        Token token = tokens[i];
+        i++;
+
         printf("%s: <%.*s>\n", TOKEN_NAMES[token.type], (int)token.length, token.start);
 
         if (token.type == T_EOF) break;

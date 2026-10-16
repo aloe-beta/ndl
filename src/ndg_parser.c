@@ -35,6 +35,9 @@ char *arena_alloc(Arena *a, size_t size) {
 
 void init_parser(Parser *p, Token *tokens) {
     init_arena(&p->arena, 16384);
+    // Add padding to prevent valid relative pointers from being NULL.
+    p->arena.pos += sizeof(size_t);
+
     p->first = NULL;
 
     p->tokens = tokens;

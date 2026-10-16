@@ -52,14 +52,34 @@ int main(int argc, char *argv[]) {
     }
 
     Token *tokens = tokenize(source, size);
+    // size_t i = 0;
+    // while (1) {
+    //     Token token = tokens[i];
+    //     i++;
+    //     printf("%s: <%.*s>\n", TOKEN_NAMES[token.type], (int)token.length, token.start);
+    //     if (token.type == T_EOF) break;
+    // }
+
+    Parser parser;
+    init_parser(&parser, tokens);
+    
     size_t i = 0;
     while (1) {
-        Token token = tokens[i];
         i++;
-
-        printf("%s: <%.*s>\n", TOKEN_NAMES[token.type], (int)token.length, token.start);
-
-        if (token.type == T_EOF) break;
+        TokenDefNode *tokenDef = parse_tokendef(&parser);
+        if (tokenDef != NULL) {
+            print_field(&parser, (size_t) tokenDef, 0);
+            continue;
+        }
+        ParseDefNode *parseDef = parse_parsedef(&parser);
+        if (parseDef != NULL) {
+            print_field(&parser, (size_t) parseDef, 0);
+            continue;
+        }
+        if (parser.pos->type == T_EOF) break;
+        
+        printf("UNCAUGHT TOKEN: %s(%.*s),\n", TOKEN_NAMES[parser.pos->type], (int)parser.pos->length, parser.pos->start);
+        break;
     }
 
     free(source);

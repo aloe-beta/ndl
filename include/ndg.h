@@ -40,6 +40,7 @@ typedef struct {
 
 typedef enum : unsigned char {
     T_SIMPLE,
+    T_GROUP,
     T_EXPR,
     T_MATCH,
     T_TOKENDEF,
@@ -57,6 +58,7 @@ Token *tokenize(char *source, size_t size);
 
 static const char* NODE_NAMES[] = {
     [T_SIMPLE]   = "simple",
+    [T_GROUP]    = "group",
     [T_EXPR]     = "expr",
     [T_MATCH]    = "match",
     [T_TOKENDEF] = "tokenDef",

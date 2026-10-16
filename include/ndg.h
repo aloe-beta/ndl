@@ -103,13 +103,13 @@ typedef struct {
 
 typedef struct {
     NodeType type;
-    SimpleNode **branch;
+    size_t *branch; // size prefixed array of SimpleNode
     SimpleNode *delimiter;
 } GroupNode;
 
 typedef struct {
     NodeType type;
-    SimpleNode **branch;
+    size_t *branch;  // size prefixed array of SimpleNode
 } MatchNode;
 
 typedef struct {
@@ -125,5 +125,10 @@ typedef struct {
     Token *name;
     MatchNode *match;
 } ParseDefNode;
+
+GroupNode *parse_group(Parser *p);
+SimpleNode *parse_simple(Parser *p);
+MatchNode *parse_match(Parser *p);
+TokenDefNode *parse_tokendef(Parser *p);
 
 #endif

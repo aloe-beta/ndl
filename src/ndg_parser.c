@@ -201,8 +201,23 @@ fail:
     return NULL;
 }
 
-// TODO: Implement
 MatchNode *parse_match(Parser *p) {
+    Token *start_pos = p->pos;
+
+    MatchNode node;
+    node.type = T_MATCH;
+
+    node.branch = parse_expr(p);
+    if (node.branch == NULL) goto fail;
+
+    MatchNode *ptr = (MatchNode*) arena_alloc(&p->arena, sizeof(MatchNode));
+    if (ptr == NULL) goto fail;
+    *ptr = node;
+
+    return (MatchNode*) ((char*) ptr - p->arena.ptr);
+
+fail:
+    p->pos = start_pos;
     return NULL;
 }
 

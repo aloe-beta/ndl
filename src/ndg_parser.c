@@ -34,9 +34,64 @@ char *arena_alloc(Arena *a, size_t size) {
 
 void init_parser(Parser *p, Token *tokens) {
     init_arena(&p->arena, 16384);
-
     p->first = NULL;
+
     p->tokens = tokens;
+    p->pos = tokens;
 }
 
-void parse_grammar() {}
+static char unknown_matches(Parser *p, char c) {
+    return p->pos->type == T_UNKNOWN && *p->pos->start == c;
+}
+
+// Note: Parsing functions should return relative pointers to allow arena realloc.
+// Note: OOM may result in odd parsing instead of exiting with an error.
+
+// TODO: Implement
+MatchNode *parse_match(Parser *p) {
+    return NULL;
+}
+
+TokenDefNode *parse_tokendef(Parser *p) {
+    Token *start_pos = p->pos;
+    TokenDefNode token;
+    token.skip = false;
+
+    if (unknown_matches(p, '~')) {
+        p->pos++;
+        token.skip = true;
+    }
+
+    if (p->pos->type != T_LEX_IDEN) goto fail;
+
+    token.name = p->pos++;
+
+    token.overrides = NULL;
+    if (unknown_matches(p, ':')) {
+        p->pos++;
+        
+        if (p->pos->type != T_LEX_IDEN) goto fail;
+
+        token.overrides = p->pos++;
+    }
+
+    if (!unknown_matches(p, '=')) goto fail;
+    token.match = parse_match(p);
+    if (token.match == NULL || !unknown_matches(p, ';')) goto fail;
+
+    // Note: OOM may result in weird parsing.
+    TokenDefNode *ptr = (TokenDefNode*) arena_alloc(&p->arena, sizeof(TokenDefNode));
+    if (ptr == NULL) goto fail;
+    *ptr = token;
+
+    return (TokenDefNode*) (p->arena.ptr - (char*) ptr);
+
+fail:
+    p->pos = start_pos;
+    return NULL;
+}
+
+// TODO: Implement
+void parse_grammar(Parser *p) {
+    while (unknown_matches(p, ';')) p->pos++;
+}

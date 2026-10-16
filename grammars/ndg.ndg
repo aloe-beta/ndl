@@ -31,7 +31,7 @@ simple = (
 expr = simple+;
 // expr: simple[]
 
-group = '(' expr:branch*:'|' ')' ('%' simple:delimiter)?;
+group = '(' expr:branch+:'|' ')' ('%' simple:delimiter)?;
 // group {
 //   branch: expr[],
 //   delimiter?: simple

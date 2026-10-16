@@ -51,9 +51,7 @@ typedef enum : unsigned char {
 } NodeType;
 
 void init_lexer(Lexer *lexer, const char* source);
-
 Token next_token(Lexer *lexer);
-
 Token *tokenize(char *source, size_t size);
 
 static const char* NODE_NAMES[] = {
@@ -126,9 +124,11 @@ typedef struct {
     MatchNode *match;
 } ParseDefNode;
 
+void init_parser(Parser *p, Token *tokens);
 GroupNode *parse_group(Parser *p);
 SimpleNode *parse_simple(Parser *p);
 MatchNode *parse_match(Parser *p);
 TokenDefNode *parse_tokendef(Parser *p);
+ParseDefNode *parse_parsenode(Parser *p);
 
 #endif

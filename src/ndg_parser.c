@@ -250,7 +250,7 @@ TokenDefNode *parse_tokendef(Parser *p) {
     if (ptr == NULL) goto fail;
     *ptr = node;
 
-    return (TokenDefNode*) (p->arena.ptr - (char*) ptr);
+    return (TokenDefNode*) ((char*) ptr - p->arena.ptr);
 
 fail:
     p->pos = start_pos;

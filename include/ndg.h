@@ -129,6 +129,6 @@ GroupNode *parse_group(Parser *p);
 SimpleNode *parse_simple(Parser *p);
 MatchNode *parse_match(Parser *p);
 TokenDefNode *parse_tokendef(Parser *p);
-ParseDefNode *parse_parsenode(Parser *p);
+ParseDefNode *parse_parsedef(Parser *p);
 
 #endif

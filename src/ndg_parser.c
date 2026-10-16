@@ -260,7 +260,7 @@ fail:
     return NULL;
 }
 
-ParseDefNode *parse_parsenode(Parser *p) {
+ParseDefNode *parse_parsedef(Parser *p) {
     Token *start_pos = p->pos;
     ParseDefNode node;
     node.type = T_PARSEDEF;

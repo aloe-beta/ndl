@@ -245,6 +245,7 @@ TokenDefNode *parse_tokendef(Parser *p) {
     if (!unknown_matches(p, '=')) goto fail;
     node.match = parse_match(p);
     if (node.match == NULL || !unknown_matches(p, ';')) goto fail;
+    p->pos++;
 
     TokenDefNode *ptr = (TokenDefNode*) arena_alloc(&p->arena, sizeof(TokenDefNode));
     if (ptr == NULL) goto fail;

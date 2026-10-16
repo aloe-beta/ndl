@@ -51,15 +51,9 @@ static char unknown_matches(Parser *p, char c) {
 // Note: Parsing functions should return relative pointers to allow arena realloc.
 // Note: OOM may result in odd parsing instead of exiting with an error.
 
-GroupNode *parse_group(Parser *p) {
+size_t *parse_expr(Parser *p) {
     Token *start_pos = p->pos;
     ptrdiff_t arena_offset = p->arena.pos - p->arena.ptr;
-
-    GroupNode node;
-    node.type = T_GROUP;
-
-    if (!unknown_matches(p, '(')) goto fail;
-    p->pos++;
 
     // Allocate arrays of simples
     size_t branch_count = 0;
@@ -84,7 +78,7 @@ GroupNode *parse_group(Parser *p) {
     // Build pointer list of arrays
     size_t *array = (size_t*) arena_alloc(&p->arena, (branch_count + 1)*sizeof(size_t*));
     if (array == NULL) goto fail;
-    node.branch = array;
+    size_t *node = (size_t*) ((char*) array - p->arena.ptr);
     *(array++) = branch_count;
 
     char *scan_ptr = p->arena.pos + arena_offset;
@@ -93,7 +87,27 @@ GroupNode *parse_group(Parser *p) {
         scan_ptr += *scan_ptr + sizeof(size_t);
     }
 
-    // Continue parsing
+    return node;
+
+fail:
+    p->pos = start_pos;
+    // TODO: Clean up
+    p->arena.pos = p->arena.ptr + arena_offset;
+    return NULL;
+}
+
+GroupNode *parse_group(Parser *p) {
+    Token *start_pos = p->pos;
+
+    GroupNode node;
+    node.type = T_GROUP;
+
+    if (!unknown_matches(p, '(')) goto fail;
+    p->pos++;
+
+    node.branch = parse_expr(p);
+    if (node.branch == NULL) goto fail;
+
     if (!unknown_matches(p, ')')) goto fail;
     p->pos++;
 
@@ -112,8 +126,6 @@ GroupNode *parse_group(Parser *p) {
 
 fail:
     p->pos = start_pos;
-    // TODO: Clean up
-    p->arena.pos = p->arena.ptr + arena_offset;
     return NULL;
 }
 

@@ -1,5 +1,4 @@
 #include "ndg.h"
-#include <stddef.h>
 
 void init_arena(Arena *a, size_t size) {
     char *ptr = malloc(size);
@@ -69,7 +68,7 @@ size_t *parse_expr(Parser *p) {
             (*count)++;
         }
 
-        if (count == 0) goto fail;
+        if (*count == 0) goto fail;
         branch_count++;
 
         if (!unknown_matches(p, '|')) break;
@@ -81,8 +80,8 @@ size_t *parse_expr(Parser *p) {
     size_t *node = (size_t*) ((char*) array - p->arena.ptr);
     *(array++) = branch_count;
 
-    char *scan_ptr = p->arena.pos + arena_offset;
-    for (size_t i = branch_count; i > 0; i++) {
+    char *scan_ptr = p->arena.ptr + arena_offset;
+    for (size_t i = branch_count; i > 0; i--) {
         *(array++) = *scan_ptr;
         scan_ptr += *scan_ptr + sizeof(size_t);
     }

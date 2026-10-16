@@ -132,12 +132,10 @@ MatchNode *parse_match(Parser *p) {
 TokenDefNode *parse_tokendef(Parser *p) {
     Token *start_pos = p->pos;
     TokenDefNode node;
-    node.skip = false;
+    node.type = T_TOKENDEF;
 
-    if (unknown_matches(p, '~')) {
-        p->pos++;
-        node.skip = true;
-    }
+    node.skip = unknown_matches(p, '~');
+    if (node.skip) p->pos++;
 
     if (p->pos->type != T_LEX_IDEN) goto fail;
 

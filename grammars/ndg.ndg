@@ -37,7 +37,7 @@ group = '(' expr:branch+:'|' ')' ('%' simple:delimiter)?;
 //   delimiter?: simple
 // }
 
-match = expr:branch*:'|';
+match = expr:branch+:'|';
 // match {
 //   branch: expr[]
 // }

@@ -48,6 +48,83 @@ static char unknown_matches(Parser *p, char c) {
 // Note: OOM may result in odd parsing instead of exiting with an error.
 
 // TODO: Implement
+GroupNode *parse_group(Parser *p) {
+    return NULL;
+}
+
+SimpleNode *parse_simple(Parser *p) {
+    Token *start_pos = p->pos;
+    char *arena_pos = p->arena.pos;
+
+    SimpleNode node;
+    node.type = T_SIMPLE;
+
+    node.lookbehind = unknown_matches(p, '<');
+    if (node.lookbehind) p->pos++;
+
+    node.negate = unknown_matches(p, '~');
+    if (node.negate) p->pos++;
+
+    TokenType type = p->pos->type;
+    if (type == T_STRING || type == T_RANGE || type == T_LEX_IDEN || type == T_PARSE_IDEN) {
+        TokenNode token_node;
+        token_node.type = T_TOKEN;
+        token_node.token = p->pos++;
+
+        TokenNode *ptr = (TokenNode*) arena_alloc(&p->arena, sizeof(TokenNode));
+        if (ptr == NULL) goto fail;
+        *ptr = token_node;
+
+        node.match = (NodeType*) (p->arena.ptr - (char*) ptr);
+    } else {
+        node.match = (NodeType*) parse_group(p);
+        if (node.match == NULL) goto fail;
+    }
+
+    node.iden = NULL;
+    node.flag = unknown_matches(p, '@');
+    if (node.flag || unknown_matches(p, ':')) {
+        p->pos++;
+
+        if (p->pos->type != T_PARSE_IDEN) goto fail;
+        node.iden = p->pos++;
+    }
+
+    node.quantity = '\0';
+    node.delimiter = NULL;
+
+    if (unknown_matches(p, '?')) {
+        p->pos++;
+        node.quantity = '?';
+    } else if (unknown_matches(p, '*') || unknown_matches(p, '+')) {
+        node.quantity = *p->pos->start;
+        p->pos++;
+
+        if (unknown_matches(p, ':')) {
+            p->pos++;
+
+            node.delimiter = (NodeType*) parse_simple(p);
+            if (node.delimiter == NULL) goto fail;
+        }
+    }
+
+    node.lookahead = unknown_matches(p, '>');
+    if (node.lookahead) p->pos++;
+
+    SimpleNode *ptr = (SimpleNode*) arena_alloc(&p->arena, sizeof(SimpleNode));
+    if (ptr == NULL) goto fail;
+    *ptr = node;
+
+    return (SimpleNode*) (p->arena.ptr - (char*) ptr);
+
+fail:
+    p->pos = start_pos;
+    // TODO: Clean up instead of stepping back alone.
+    p->arena.pos = arena_pos;
+    return NULL;
+}
+
+// TODO: Implement
 MatchNode *parse_match(Parser *p) {
     return NULL;
 }

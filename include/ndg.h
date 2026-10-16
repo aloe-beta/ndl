@@ -3,10 +3,11 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef unsigned int uint;
 
-typedef enum {
+typedef enum : unsigned char {
     T_UNKNOWN,
     T_EOF,
     T_STRING,
@@ -37,14 +38,15 @@ typedef struct {
     uint line;
 } Lexer;
 
-typedef enum {
+typedef enum : unsigned char {
     T_SIMPLE,
     T_EXPR,
     T_MATCH,
     T_TOKENDEF,
     T_PARSEDEF,
     T_STMT,
-    T_GRAMMAR
+    T_GRAMMAR,
+    T_TOKEN
 } NodeType;
 
 void init_lexer(Lexer *lexer, const char* source);
@@ -60,7 +62,8 @@ static const char* NODE_NAMES[] = {
     [T_TOKENDEF] = "tokenDef",
     [T_PARSEDEF] = "parseDef",
     [T_STMT]     = "stmt",
-    [T_GRAMMAR]  = "grammar"
+    [T_GRAMMAR]  = "grammar",
+    [T_TOKEN]    = "token"
 };
 
 typedef struct {
@@ -73,6 +76,52 @@ typedef struct {
     Arena arena;
     NodeType *first;
     Token *tokens;
+    Token *pos;
 } Parser;
+
+// Nodes
+
+typedef struct {
+    NodeType type;
+    Token *token;
+} TokenNode;
+
+typedef struct {
+    NodeType type;
+    bool lookahead;
+    bool lookbehind;
+    bool negate;
+    bool flag;
+    char quantity;
+
+    NodeType *match;
+    Token *iden;
+    NodeType *delimiter; // SimpleNode
+} SimpleNode;
+
+typedef struct {
+    NodeType type;
+    SimpleNode **branch;
+    SimpleNode *delimiter;
+} GroupNode;
+
+typedef struct {
+    NodeType type;
+    SimpleNode **branch;
+} MatchNode;
+
+typedef struct {
+    NodeType type;
+    bool skip;
+    Token *name;
+    Token *overrides;
+    MatchNode *match;
+} TokenDefNode;
+
+typedef struct {
+    NodeType type;
+    Token *name;
+    MatchNode *match;
+} ParseDefNode;
 
 #endif

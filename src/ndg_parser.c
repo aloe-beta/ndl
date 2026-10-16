@@ -72,6 +72,7 @@ size_t *parse_expr(Parser *p) {
         branch_count++;
 
         if (!unknown_matches(p, '|')) break;
+        p->pos++;
     }
 
     // Build pointer list of arrays
@@ -82,8 +83,9 @@ size_t *parse_expr(Parser *p) {
 
     char *scan_ptr = p->arena.ptr + arena_offset;
     for (size_t i = branch_count; i > 0; i--) {
-        *(array++) = *scan_ptr;
-        scan_ptr += *scan_ptr + sizeof(size_t);
+        size_t count = *(size_t*) scan_ptr;
+        *(array++) = count;
+        scan_ptr += sizeof(size_t) + count*sizeof(SimpleNode);
     }
 
     return node;
@@ -142,7 +144,7 @@ SimpleNode *parse_simple(Parser *p) {
     if (node.negate) p->pos++;
 
     TokenType type = p->pos->type;
-    if (type == T_STRING || type == T_RANGE || type == T_LEX_IDEN || type == T_PARSE_IDEN) {
+    if (type == T_STRING || type == T_RANGE || type == T_LEX_IDEN || type == T_PARSE_IDEN || unknown_matches(p, '.')) {
         TokenNode token_node;
         token_node.type = T_TOKEN;
         token_node.token = p->pos++;
@@ -229,7 +231,6 @@ TokenDefNode *parse_tokendef(Parser *p) {
     if (node.skip) p->pos++;
 
     if (p->pos->type != T_LEX_IDEN) goto fail;
-
     node.name = p->pos++;
 
     node.overrides = NULL;
@@ -242,6 +243,8 @@ TokenDefNode *parse_tokendef(Parser *p) {
     }
 
     if (!unknown_matches(p, '=')) goto fail;
+    p->pos++;
+    
     node.match = parse_match(p);
     if (node.match == NULL || !unknown_matches(p, ';')) goto fail;
     p->pos++;
@@ -263,7 +266,10 @@ ParseDefNode *parse_parsenode(Parser *p) {
     node.type = T_PARSEDEF;
 
     if (p->pos->type != T_PARSE_IDEN) goto fail;
-    node.name = p->pos;
+    node.name = p->pos++;
+
+    if (!unknown_matches(p, '=')) goto fail;
+    p->pos++;
 
     node.match = parse_match(p);
     if (node.match == NULL || !unknown_matches(p, ';')) goto fail;

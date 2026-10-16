@@ -1,4 +1,5 @@
 #include "ndg.h"
+#include <stddef.h>
 
 void init_arena(Arena *a, size_t size) {
     char *ptr = malloc(size);
@@ -47,8 +48,69 @@ static char unknown_matches(Parser *p, char c) {
 // Note: Parsing functions should return relative pointers to allow arena realloc.
 // Note: OOM may result in odd parsing instead of exiting with an error.
 
-// TODO: Implement
 GroupNode *parse_group(Parser *p) {
+    Token *start_pos = p->pos;
+    ptrdiff_t arena_offset = p->arena.pos - p->arena.ptr;
+
+    GroupNode node;
+    node.type = T_GROUP;
+
+    if (!unknown_matches(p, '(')) goto fail;
+    p->pos++;
+
+    // Allocate arrays of simples
+    size_t branch_count = 0;
+    while (1) {
+        size_t *count = (size_t*) arena_alloc(&p->arena, sizeof(size_t));
+        if (count == NULL) goto fail;
+        *count = 0;
+
+        while (1) {
+            SimpleNode *simple = parse_simple(p);
+            if (simple == NULL) break;
+
+            (*count)++;
+        }
+
+        if (count == 0) goto fail;
+        branch_count++;
+
+        if (!unknown_matches(p, '|')) break;
+    }
+
+    // Build pointer list of arrays
+    size_t *array = (size_t*) arena_alloc(&p->arena, (branch_count + 1)*sizeof(size_t*));
+    if (array == NULL) goto fail;
+    node.branch = array;
+    *(array++) = branch_count;
+
+    char *scan_ptr = p->arena.pos + arena_offset;
+    for (size_t i = branch_count; i > 0; i++) {
+        *(array++) = *scan_ptr;
+        scan_ptr += *scan_ptr + sizeof(size_t);
+    }
+
+    // Continue parsing
+    if (!unknown_matches(p, ')')) goto fail;
+    p->pos++;
+
+    node.delimiter = NULL;
+    if (unknown_matches(p, '%')) {
+        p->pos++;
+        node.delimiter = parse_simple(p);
+        if (node.delimiter == NULL) goto fail;
+    }
+
+    GroupNode *ptr = (GroupNode*) arena_alloc(&p->arena, sizeof(node));
+    if (ptr == NULL) goto fail;
+
+    *ptr = node;
+    return (GroupNode*) ((char*) ptr - p->arena.ptr);
+
+fail:
+    p->pos = start_pos;
+    // TODO: Clean up
+    p->arena.pos = p->arena.ptr + arena_offset;
     return NULL;
 }
 

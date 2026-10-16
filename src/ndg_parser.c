@@ -116,7 +116,7 @@ fail:
 
 SimpleNode *parse_simple(Parser *p) {
     Token *start_pos = p->pos;
-    char *arena_pos = p->arena.pos;
+    ptrdiff_t arena_offset = p->arena.pos - p->arena.ptr;
 
     SimpleNode node;
     node.type = T_SIMPLE;
@@ -177,12 +177,12 @@ SimpleNode *parse_simple(Parser *p) {
     if (ptr == NULL) goto fail;
     *ptr = node;
 
-    return (SimpleNode*) (p->arena.ptr - (char*) ptr);
+    return (SimpleNode*) ((char*) ptr - p->arena.ptr);
 
 fail:
     p->pos = start_pos;
     // TODO: Clean up instead of stepping back alone.
-    p->arena.pos = arena_pos;
+    p->arena.pos = p->arena.ptr + arena_offset;
     return NULL;
 }
 

@@ -55,15 +55,23 @@ size_t *parse_expr(Parser *p) {
     ptrdiff_t arena_offset = p->arena.pos - p->arena.ptr;
 
     // Allocate arrays of simples
+    Arena a;
+    init_arena(&a, 256);
+    if (a.ptr == NULL) return NULL;
+
     size_t branch_count = 0;
     while (1) {
-        size_t *count = (size_t*) arena_alloc(&p->arena, sizeof(size_t));
+        size_t *count = (size_t*) arena_alloc(&a, sizeof(size_t));
         if (count == NULL) goto fail;
         *count = 0;
 
         while (1) {
             SimpleNode *simple = parse_simple(p);
             if (simple == NULL) break;
+
+            size_t* slot = (size_t*) arena_alloc(&a, sizeof(SimpleNode*));
+            if (slot == NULL) goto fail;
+            *slot = (size_t) simple;
 
             (*count)++;
         }
@@ -76,21 +84,26 @@ size_t *parse_expr(Parser *p) {
     }
 
     // Build pointer list of arrays
-    size_t *array = (size_t*) arena_alloc(&p->arena, (branch_count + 1)*sizeof(size_t*));
-    if (array == NULL) goto fail;
-    size_t *node = (size_t*) ((char*) array - p->arena.ptr);
-    *(array++) = branch_count;
+    char *list = arena_alloc(&p->arena, a.size);
+    memcpy(list, a.ptr, (size_t) (a.pos - a.ptr));
 
-    char *scan_ptr = p->arena.ptr + arena_offset;
-    for (size_t i = branch_count; i > 0; i--) {
-        size_t count = *(size_t*) scan_ptr;
-        *(array++) = count;
-        scan_ptr += sizeof(size_t) + count*sizeof(SimpleNode);
+    char *size = arena_alloc(&p->arena, sizeof(size_t));
+    if (size == NULL) goto fail;
+    *size = branch_count;
+
+    for (size_t i = 0; i < branch_count; i++) {
+        size_t *ptr = (size_t*) arena_alloc(&p->arena, sizeof(size_t));
+        if (ptr == NULL) goto fail;
+        
+        *ptr = (size_t) (list - p->arena.ptr);
+        list += (*((size_t*) list) + 1) * sizeof(size_t);
     }
 
-    return node;
+    free(a.ptr);
+    return (size_t*) (size - p->arena.ptr);
 
 fail:
+    free(a.ptr);
     p->pos = start_pos;
     // TODO: Clean up
     p->arena.pos = p->arena.ptr + arena_offset;

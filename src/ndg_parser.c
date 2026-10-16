@@ -166,7 +166,7 @@ SimpleNode *parse_simple(Parser *p) {
         if (ptr == NULL) goto fail;
         *ptr = token_node;
 
-        node.match = (NodeType*) (p->arena.ptr - (char*) ptr);
+        node.match = (NodeType*) ((char*) ptr - p->arena.ptr);
     } else {
         node.match = (NodeType*) parse_group(p);
         if (node.match == NULL) goto fail;

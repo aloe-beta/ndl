@@ -257,6 +257,29 @@ fail:
     return NULL;
 }
 
+ParseDefNode *parse_parsenode(Parser *p) {
+    Token *start_pos = p->pos;
+    ParseDefNode node;
+    node.type = T_PARSEDEF;
+
+    if (p->pos->type != T_PARSE_IDEN) goto fail;
+    node.name = p->pos;
+
+    node.match = parse_match(p);
+    if (node.match == NULL || !unknown_matches(p, ';')) goto fail;
+    p->pos++;
+
+    ParseDefNode *ptr = (ParseDefNode*) arena_alloc(&p->arena, sizeof(ParseDefNode));
+    if (ptr == NULL) goto fail;
+    *ptr = node;
+
+    return (ParseDefNode*) ((char*) ptr - p->arena.ptr);
+
+fail:
+    p->pos = start_pos;
+    return NULL;
+}
+
 // TODO: Implement
 void parse_grammar(Parser *p) {
     while (unknown_matches(p, ';')) p->pos++;

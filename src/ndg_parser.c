@@ -54,35 +54,34 @@ MatchNode *parse_match(Parser *p) {
 
 TokenDefNode *parse_tokendef(Parser *p) {
     Token *start_pos = p->pos;
-    TokenDefNode token;
-    token.skip = false;
+    TokenDefNode node;
+    node.skip = false;
 
     if (unknown_matches(p, '~')) {
         p->pos++;
-        token.skip = true;
+        node.skip = true;
     }
 
     if (p->pos->type != T_LEX_IDEN) goto fail;
 
-    token.name = p->pos++;
+    node.name = p->pos++;
 
-    token.overrides = NULL;
+    node.overrides = NULL;
     if (unknown_matches(p, ':')) {
         p->pos++;
         
         if (p->pos->type != T_LEX_IDEN) goto fail;
 
-        token.overrides = p->pos++;
+        node.overrides = p->pos++;
     }
 
     if (!unknown_matches(p, '=')) goto fail;
-    token.match = parse_match(p);
-    if (token.match == NULL || !unknown_matches(p, ';')) goto fail;
+    node.match = parse_match(p);
+    if (node.match == NULL || !unknown_matches(p, ';')) goto fail;
 
-    // Note: OOM may result in weird parsing.
     TokenDefNode *ptr = (TokenDefNode*) arena_alloc(&p->arena, sizeof(TokenDefNode));
     if (ptr == NULL) goto fail;
-    *ptr = token;
+    *ptr = node;
 
     return (TokenDefNode*) (p->arena.ptr - (char*) ptr);
 

@@ -2,6 +2,7 @@
 #define NDG_H
 
 #include <stddef.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -130,5 +131,7 @@ SimpleNode *parse_simple(Parser *p);
 MatchNode *parse_match(Parser *p);
 TokenDefNode *parse_tokendef(Parser *p);
 ParseDefNode *parse_parsedef(Parser *p);
+
+void print_field(Parser *p, size_t offset, uint padding);
 
 #endif

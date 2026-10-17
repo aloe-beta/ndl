@@ -1,4 +1,6 @@
 #include "ndg.h"
+#include <stddef.h>
+#include <string.h>
 
 void init_arena(Arena *a, size_t size) {
     char *ptr = malloc(size);
@@ -300,6 +302,46 @@ fail:
 }
 
 // TODO: Implement
-void parse_grammar(Parser *p) {
-    while (unknown_matches(p, ';')) p->pos++;
+size_t *parse_grammar(Parser *p) {
+    Token *start_pos = p->pos;
+    ptrdiff_t arena_offset = p->arena.pos - p->arena.ptr;
+
+    Arena a;
+    init_arena(&a, 512);
+    if (a.ptr == NULL) return NULL;
+
+    size_t *count = (size_t*) arena_alloc(&a, sizeof(size_t));
+    if (count == NULL)  return NULL;
+
+    while (1) {
+        while (unknown_matches(p, ';')) p->pos++;
+
+        size_t offset = (size_t) parse_tokendef(p);
+        if (offset != 0) goto append;
+
+        offset = (size_t) parse_parsedef(p);
+        if (offset != 0) goto append;
+
+        if (p->pos->type == T_EOF) break;
+
+        goto fail;
+    append:;
+        size_t *ptr = (size_t*) arena_alloc(&a, sizeof(size_t));
+        if (ptr == NULL) goto fail;
+        *ptr = offset;
+        (*count)++;
+    }
+
+    size_t *list = (size_t*) arena_alloc(&p->arena, (size_t) (a.pos - a.ptr));
+    if (list == NULL) goto fail;
+    memcpy(list, a.ptr, (size_t) (a.pos - a.ptr));
+
+    free(a.ptr);
+    return (size_t*) ((char*) list - p->arena.ptr);
+fail:
+    free(a.ptr);
+    p->pos = start_pos;
+    // TODO: Clean up
+    p->arena.pos = p->arena.ptr + arena_offset;
+    return NULL;
 }

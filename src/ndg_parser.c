@@ -302,7 +302,6 @@ fail:
     return NULL;
 }
 
-// TODO: Implement
 size_t *parse_grammar(Parser *p) {
     Token *start_pos = p->pos;
     ptrdiff_t arena_offset = p->arena.pos - p->arena.ptr;
@@ -313,6 +312,7 @@ size_t *parse_grammar(Parser *p) {
 
     size_t *count = (size_t*) arena_alloc(&a, sizeof(size_t));
     if (count == NULL)  return NULL;
+    *count = 0;
 
     while (1) {
         while (unknown_matches(p, ';')) p->pos++;

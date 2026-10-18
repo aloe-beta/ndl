@@ -1,5 +1,6 @@
 #include "ndg.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 void init_arena(Arena *a, size_t size) {
@@ -344,4 +345,67 @@ fail:
     // TODO: Clean up
     p->arena.pos = p->arena.ptr + arena_offset;
     return NULL;
+}
+
+void link_tree(Parser *p, NodeType *type) {
+    switch (*type) {
+        case T_TOKEN: {
+            break;
+        }
+        case T_SIMPLE: {
+            SimpleNode *ptr = (SimpleNode*) type;
+
+            ptr->match = (NodeType*) (p->arena.ptr + (size_t) ptr->match);
+            link_tree(p, ptr->match);
+            
+            if (ptr->delimiter == NULL) break;
+            ptr->delimiter = (NodeType*) (p->arena.ptr + (size_t) ptr->delimiter);
+            link_tree(p, ptr->delimiter);
+
+            break;
+        }
+        case T_GROUP: {
+            GroupNode *ptr = (GroupNode*) type;
+
+            if (ptr->delimiter == NULL) goto branch;
+            ptr->delimiter = (SimpleNode*) (p->arena.ptr + (size_t) ptr->delimiter);
+            link_tree(p, (NodeType*) ptr->delimiter);
+
+            goto branch;
+        }
+        case T_MATCH: {
+            goto branch;
+        }
+        case T_TOKENDEF: {
+            TokenDefNode *ptr = (TokenDefNode*) type;
+            ptr->match = (MatchNode*) (p->arena.ptr + (size_t) ptr->match);
+            link_tree(p, (NodeType*) ptr->match);
+            break;
+        }
+        case T_PARSEDEF: {
+            ParseDefNode *ptr = (ParseDefNode*) type;
+            ptr->match = (MatchNode*) (p->arena.ptr + (size_t) ptr->match);
+            link_tree(p, (NodeType*) ptr->match);
+            break;
+        }
+        default: {}
+    }
+    return;
+branch:;
+    MatchNode *ptr = (MatchNode*) type;
+    ptr->branch = (size_t*) (p->arena.ptr + (size_t) ptr->branch);
+
+    size_t count = *ptr->branch;
+    for (size_t i = 1; i <= count; i++) {
+        size_t* node = ptr->branch + i;
+        *node = (size_t) (p->arena.ptr + *node);
+        
+        size_t *list = (size_t*) *node;
+        size_t size = list[0];
+
+        for (size_t j = 1; j <= size; j++) {
+            list[j] = (size_t) (p->arena.ptr + list[j]);
+            link_tree(p, (NodeType*) list[j]);
+        }
+    }
 }

@@ -1,7 +1,7 @@
 CC = cc
 CFLAGS = -Wall -Wextra -Iinclude
 SRC = $(wildcard src/*.c)
-TARGET = bin/ndl
+TARGET = bin/ndg
 
 $(TARGET): $(SRC)
 	mkdir -p bin

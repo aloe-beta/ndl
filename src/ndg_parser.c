@@ -302,7 +302,7 @@ fail:
     return NULL;
 }
 
-size_t *parse_grammar(Parser *p) {
+ParseTree *parse_grammar(Parser *p) {
     Token *start_pos = p->pos;
     ptrdiff_t arena_offset = p->arena.pos - p->arena.ptr;
 
@@ -338,7 +338,7 @@ size_t *parse_grammar(Parser *p) {
     memcpy(list, a.ptr, (size_t) (a.pos - a.ptr));
 
     free(a.ptr);
-    return (size_t*) ((char*) list - p->arena.ptr);
+    return (ParseTree*) ((char*) list - p->arena.ptr);
 fail:
     free(a.ptr);
     p->pos = start_pos;
@@ -408,4 +408,19 @@ branch:;
             link_tree(p, (NodeType*) list[j]);
         }
     }
+}
+
+ParseTree parse(Parser *p) {
+    ParseTree *parsed = parse_grammar(p);
+    if (parsed == NULL) return (ParseTree) {0};
+
+    size_t *ptr = (size_t*) (p->arena.ptr + (size_t) parsed);
+    size_t length = *ptr;
+
+    for (size_t i = 1; i <= length; i++) {
+        ptr[i] = (size_t) (p->arena.ptr + ptr[i]);
+        link_tree(p, (NodeType*) ptr[i]);
+    }
+
+    return (ParseTree) { length, (NodeType**) (ptr + 1) };
 }

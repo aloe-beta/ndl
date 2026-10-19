@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -63,23 +64,9 @@ int main(int argc, char *argv[]) {
     Parser parser;
     init_parser(&parser, tokens);
     
-    size_t i = 0;
-    while (1) {
-        i++;
-        TokenDefNode *tokenDef = parse_tokendef(&parser);
-        if (tokenDef != NULL) {
-            print_field(&parser, (size_t) tokenDef, 0);
-            continue;
-        }
-        ParseDefNode *parseDef = parse_parsedef(&parser);
-        if (parseDef != NULL) {
-            print_field(&parser, (size_t) parseDef, 0);
-            continue;
-        }
-        if (parser.pos->type == T_EOF) break;
-        
-        printf("UNCAUGHT TOKEN: %s(%.*s),\n", TOKEN_NAMES[parser.pos->type], (int)parser.pos->length, parser.pos->start);
-        break;
+    ParseTree tree = parse(&parser);
+    for (size_t i = 0; i < tree.length; i++) {
+        print_field(tree.children[i], 0);
     }
 
     free(source);

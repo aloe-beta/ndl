@@ -141,6 +141,6 @@ ParseTree *parse_grammar(Parser *p);
 void link_tree(Parser *p, NodeType *type);
 ParseTree parse(Parser *p);
 
-void print_field(Parser *p, size_t offset, uint padding);
+void print_field(NodeType* type, uint padding);
 
 #endif

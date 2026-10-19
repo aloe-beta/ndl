@@ -108,7 +108,7 @@ typedef struct {
 
 typedef struct {
     NodeType type;
-    size_t *branch;  // size prefixed array of SimpleNode
+    size_t *branch; // size prefixed array of SimpleNode
 } MatchNode;
 
 typedef struct {
@@ -125,12 +125,21 @@ typedef struct {
     MatchNode *match;
 } ParseDefNode;
 
+typedef struct {
+    size_t length;
+    NodeType **children;
+} ParseTree;
+
 void init_parser(Parser *p, Token *tokens);
 GroupNode *parse_group(Parser *p);
 SimpleNode *parse_simple(Parser *p);
 MatchNode *parse_match(Parser *p);
 TokenDefNode *parse_tokendef(Parser *p);
 ParseDefNode *parse_parsedef(Parser *p);
+ParseTree *parse_grammar(Parser *p);
+
+void link_tree(Parser *p, NodeType *type);
+ParseTree parse(Parser *p);
 
 void print_field(Parser *p, size_t offset, uint padding);
 
